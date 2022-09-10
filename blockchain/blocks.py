@@ -193,8 +193,8 @@ class Block:
 
     @property
     def seed(self):
-        seed_string = '{}{}{}{}'.format(
-            self.build_merkel_tree(), self.prev_hash, self.index, self.timestamp
+        seed_string = '{}{}{}'.format(
+            self.prev_hash, self.index, self.timestamp
         )
         return sha256(seed_string.encode()).hexdigest()
 

@@ -9,7 +9,7 @@ import asyncio
 import logging
 import sys
 
-from blockchain.verifiers import BlockVerificationFailed
+from blockchain.verifiers import BlockVerificationFailed, BlockOutOfChain
 from blockchain.wallet.address import Address
 from models import *
 from blockchain.db import DB
@@ -52,7 +52,8 @@ app.jobs = {}
 # Make app accept CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=['*']
+    allow_origins=['*'],
+    allow_methods=['*']
 )
 
 ### TASKS
@@ -110,17 +111,18 @@ def broadcast(path, data, params=False, fiter_host=None):
 ### SERVER OPERATIONS
 
 @app.post("/chain/mine")
-async def mine(solution: str, block: BlockModel):
+async def mine(request: Request):
+    data = await request.json()
     bc = app.config['api']
     try:
-        res = bc.mine_block(solution, block.to_block())
+        res = bc.mine_block(Block.from_dict(data['block']))
         if res:
             return {"success": True, "message": "Successfully mined block!"}
         else:
             return {"success": False, "message": "Block not mined!"}
     except (UnicodeDecodeError, json.JSONDecodeError, binascii.Error):
         return {"error": "Invalid board"}
-    except BlockVerificationFailed as e:
+    except (BlockVerificationFailed, BlockOutOfChain) as e:
         return {"error": str(e)}
 
 @app.get("/chain/get_block_currently_mining")

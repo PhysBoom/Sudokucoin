@@ -52,8 +52,8 @@ class API:
             self.bc.rollover_block(block)
         return res
 
-    def mine_block(self, solution: str, block: Block):
-        return self.bc.mine_block(solution, block)
+    def mine_block(self, block: Block):
+        return self.bc.mine_block(block)
 
     def add_tx(self, tx):
         return self.bc.add_tx(Tx.from_dict(tx))

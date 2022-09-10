@@ -154,8 +154,7 @@ class Blockchain:
         if self.on_prev_block:
             self.on_prev_block(block, self.db)
 
-    def mine_block(self, puzzle_solution, block: Block):
-        block.puzzle_solution = puzzle_solution
+    def mine_block(self, block: Block):
         if BlockVerifier(self.db).verify(self.head, block):
             self.add_block(block)
             self.rollover_block(block)
