@@ -41,11 +41,9 @@ class API:
 
     def get_block_currently_mining(self, private_key: int):
         wallet = Address(private_key)
-        return self.bc.force_block(wallet)
-
-    def get_cur_puzzle(self, private_key: int):
-        wallet = Address(private_key)
-        return self.bc.get_cur_puzzle(wallet)
+        block = self.bc.force_block(wallet)
+        puzzle = self.bc.to_puzzle(block)
+        return {"puzzle": puzzle, "block": block.as_dict}
 
     def add_block(self, block):
         block = Block.from_dict(block)
@@ -54,8 +52,8 @@ class API:
             self.bc.rollover_block(block)
         return res
 
-    def mine_block(self, solution: str, private_key: int):
-        return self.bc.mine_block(solution, Address(private_key))
+    def mine_block(self, solution: str, block: Block):
+        return self.bc.mine_block(solution, block)
 
     def add_tx(self, tx):
         return self.bc.add_tx(Tx.from_dict(tx))

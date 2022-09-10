@@ -2,6 +2,8 @@
 from typing import List
 from pydantic import BaseModel, Field
 
+from blockchain.blocks import Tx, Block
+
 """
 Just some Input models for FastApi
 """
@@ -26,14 +28,30 @@ class TxModel(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
+    def to_tx(self):
+        return Tx(
+            self.inputs,
+            self.outputs,
+            self.timestamp
+        )
+
 class BlockModel(BaseModel):
     index:int
-    nonce:int
+    puzzle_solution:str
     timestamp:int
     prev_hash:str
     txs:List[TxModel]
     class Config:
         arbitrary_types_allowed = True
+
+    def to_block(self):
+        return Block(
+            [tx.to_tx() for tx in self.txs],
+            self.index,
+            self.prev_hash,
+            self.timestamp,
+            self.puzzle_solution
+        )
 
 class BlocksModel(BaseModel):
     blocks:List[BlockModel]

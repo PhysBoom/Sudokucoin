@@ -34,9 +34,9 @@ class Blockchain:
 
     def create_coinbase_tx(self, fee=0, wallet:Address=None):
         wallet = wallet or self.wallet
-        inp = Input('COINBASE',0,wallet.to_public_key().encode(),0)
+        inp = Input('COINBASE',0,wallet.to_public_key().encode_b64(),0)
         inp.sign(wallet)
-        out = Output(wallet.to_public_key().encode(), self.db.config['mining_reward']+fee, 0)
+        out = Output(wallet.to_public_key().encode_b64(), self.db.config['mining_reward']+fee, 0)
         return Tx([inp],[out])
 
     def is_valid_block(self, block):
@@ -154,8 +154,7 @@ class Blockchain:
         if self.on_prev_block:
             self.on_prev_block(block, self.db)
 
-    def mine_block(self, puzzle_solution, wallet:Address=None):
-        block = self.force_block(wallet)
+    def mine_block(self, puzzle_solution, block: Block):
         block.puzzle_solution = puzzle_solution
         if BlockVerifier(self.db).verify(self.head, block):
             self.add_block(block)
@@ -163,8 +162,7 @@ class Blockchain:
             return True
         return False
 
-    def get_cur_puzzle(self, wallet:Address=None):
-        block = self.force_block(wallet)
+    def to_puzzle(self, block: Block):
         return SudokuGenerator(self.db.config['difficulty'], block.seed).generate_board().encode()
 
     @property

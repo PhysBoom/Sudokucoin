@@ -1,3 +1,5 @@
+import base64
+
 import rsa
 import binascii
 
@@ -33,7 +35,7 @@ class TxVerifier:
                 inp.prev_tx_hash, inp.output_index, inp.address, inp.index
             )
             try:
-                Address.verify(hash_string.encode(), binascii.unhexlify(inp.signature.encode()), EllipticCurvePoint.decode(inp.address))
+                Address.verify(hash_string.encode(), binascii.unhexlify(base64.b64decode(inp.signature)), EllipticCurvePoint.decode(inp.address))
             except:
                 raise Exception('Signature verification failed: %s' % inp.as_dict)
 

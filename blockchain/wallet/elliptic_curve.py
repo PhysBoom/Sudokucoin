@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import base64
 
 # From scratch implementation of elliptic curve by me (w/ reference to Mastering Bitcoin book's description of stuff). If there are any errors, please let me know.
 
@@ -108,7 +109,14 @@ class EllipticCurvePoint:
     def encode(self):
         return b'\x04' + self.x.to_bytes(32, 'big') + self.y.to_bytes(32, 'big')
 
+    def encode_b64(self):
+        return base64.b64encode(self.encode()).decode()
+
     @classmethod
     def decode(cls, data: bytes):
         assert data[0] == 4
         return cls(int.from_bytes(data[1:33], 'big'), int.from_bytes(data[33:], 'big'))
+
+    @classmethod
+    def decode_b64(cls, data: str):
+        return cls.decode(base64.b64decode(data))

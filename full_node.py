@@ -109,21 +109,16 @@ def broadcast(path, data, params=False, fiter_host=None):
 ### SERVER OPERATIONS
 
 @app.post("/chain/mine")
-async def mine(solution: str, private_key: int):
+async def mine(solution: str, block: BlockModel):
     bc = app.config['api']
     try:
-        res = bc.mine_block(solution, private_key)
+        res = bc.mine_block(solution, block.to_block())
         if res:
             return {"success": True, "message": "Successfully mined block!"}
         else:
             return {"success": False, "message": "Block not mined!"}
     except (UnicodeDecodeError, json.JSONDecodeError, binascii.Error):
         return {"error": "Invalid board"}
-
-@app.get("/chain/cur_puzzle")
-async def cur_puzzle(private_key: int):
-    bc = app.config['api']
-    return bc.get_cur_puzzle(private_key)
 
 @app.get("/chain/get_block_currently_mining")
 async def get_block_currently_mining(private_key: int):

@@ -1,3 +1,4 @@
+import base64
 import time
 from hashlib import sha256
 from merkletools import MerkleTools
@@ -19,7 +20,7 @@ class Input:
         hash_string = '{}{}{}{}'.format(
             self.prev_tx_hash, self.output_index, self.address, self.index
         ).encode()
-        self.signature = wallet.sign(hash_string)
+        self.signature = base64.b64encode(wallet.sign(hash_string))
 
     @property
     def hash(self):
