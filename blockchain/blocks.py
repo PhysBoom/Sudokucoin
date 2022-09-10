@@ -7,13 +7,13 @@ from merkletools import MerkleTools
 class Input:
     __slots__ = 'prev_tx_hash', 'output_index', 'signature', '_hash', 'address', 'index', 'amount'
 
-    def __init__(self, prev_tx_hash, output_index, address, index=0):
+    def __init__(self, prev_tx_hash, output_index, address, index=0, signature=None):
         self.prev_tx_hash = prev_tx_hash
         self.output_index = output_index
         self.address = address
         self.index = 0
         self._hash = None
-        self.signature = None
+        self.signature = signature
         self.amount = None
 
     def sign(self, wallet):
@@ -61,12 +61,12 @@ class Input:
 class Output:
     __slots__ = '_hash', 'address', 'index', 'amount', 'input_hash'
 
-    def __init__(self, address, amount, index=0):
+    def __init__(self, address, amount, index=0, input_hash=None):
         self.address = address
         self.index = 0
         self.amount = int(amount)
         # i use input hash here to make output hash unique, especialy for COINBASE tx
-        self.input_hash = None
+        self.input_hash = input_hash
         self._hash = None
 
     @property

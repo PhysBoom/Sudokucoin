@@ -9,6 +9,7 @@ import asyncio
 import logging
 import sys
 
+from blockchain.verifiers import BlockVerificationFailed
 from blockchain.wallet.address import Address
 from models import *
 from blockchain.db import DB
@@ -119,6 +120,8 @@ async def mine(solution: str, block: BlockModel):
             return {"success": False, "message": "Block not mined!"}
     except (UnicodeDecodeError, json.JSONDecodeError, binascii.Error):
         return {"error": "Invalid board"}
+    except BlockVerificationFailed as e:
+        return {"error": str(e)}
 
 @app.get("/chain/get_block_currently_mining")
 async def get_block_currently_mining(private_key: int):

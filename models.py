@@ -2,7 +2,7 @@
 from typing import List
 from pydantic import BaseModel, Field
 
-from blockchain.blocks import Tx, Block
+from blockchain.blocks import Tx, Block, Input, Output
 
 """
 Just some Input models for FastApi
@@ -15,11 +15,23 @@ class InputModel(BaseModel):
     index:int
     signature:str
 
+    def to_input(self):
+        return Input(
+            self.prev_tx_hash,
+            self.output_index,
+            self.address,
+            self.index,
+            self.signature
+        )
+
 class OutputModel(BaseModel):
     amount:int
     address:str
     index:int
     input_hash:str
+
+    def to_output(self):
+        return Output(self.address, self.amount, self.index, self.input_hash)
 
 class TxModel(BaseModel):
     inputs:List[InputModel]
@@ -30,8 +42,8 @@ class TxModel(BaseModel):
 
     def to_tx(self):
         return Tx(
-            self.inputs,
-            self.outputs,
+            [input.to_input() for input in self.inputs],
+            [output.to_output() for output in self.outputs],
             self.timestamp
         )
 

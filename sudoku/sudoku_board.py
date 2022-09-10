@@ -144,7 +144,7 @@ class SudokuBoard:
     @classmethod
     def decode(cls, encoded_board: str) -> "SudokuBoard":
         json_board = json.loads(base64.b64decode(encoded_board).decode())
-        return cls(json_board["n"], json_board["s"], json_board["b"])
+        return cls(json_board["n"], json_board["seed"], json_board["board"])
 
 
 
