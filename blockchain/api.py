@@ -1,6 +1,6 @@
 from .blocks import Tx, Block
 from .wallet.address import Address
-
+from websocket_server import BlockchainEvent, WebsocketServer
 
 class API:
 
@@ -11,6 +11,8 @@ class API:
 
     def __init__(self, blockcain):
         self.bc = blockcain
+        self.ws = WebsocketServer(8765)
+        self.ws.start()
 
     def get_user_balance(self, address):
         total = 0
@@ -52,8 +54,15 @@ class API:
             self.bc.rollover_block(block)
         return res
 
-    def mine_block(self, block: Block):
-        return self.bc.mine_block(block)
+    async def mine_block(self, block: Block):
+        res = self.bc.mine_block(block)
+        if res:
+            await self.ws.broadcast(BlockchainEvent(
+                event_type="block_mined",
+                message=f"User {block.winning_address} mined block {block.index}",
+                data={}
+            ))
+        return res
 
     def add_tx(self, tx):
         return self.bc.add_tx(Tx.from_dict(tx))

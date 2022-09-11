@@ -115,7 +115,7 @@ async def mine(request: Request):
     data = await request.json()
     bc = app.config['api']
     try:
-        res = bc.mine_block(Block.from_dict(data['block']))
+        res = await bc.mine_block(Block.from_dict(data['block']))
         if res:
             return {"success": True, "message": "Successfully mined block!"}
         else:

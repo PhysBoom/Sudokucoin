@@ -1,6 +1,7 @@
 import base64
 import time
 from hashlib import sha256
+from blockchain.wallet.elliptic_curve import EllipticCurvePoint
 from merkletools import MerkleTools
 
 
@@ -190,6 +191,10 @@ class Block:
             self.build_merkel_tree(), self.prev_hash, self.index, self.puzzle_solution, self.timestamp
         )
         return sha256(sha256(block_string.encode()).hexdigest().encode('utf8')).hexdigest()
+
+    @property
+    def winning_address(self):
+        return EllipticCurvePoint.decode_b64(self.txs[0].outputs[0].address).to_address() if self.txs and self.txs[0].inputs[0].prev_tx_hash == 'COINBASE' else None
 
     @property
     def seed(self):

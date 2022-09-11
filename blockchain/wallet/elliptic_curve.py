@@ -1,5 +1,8 @@
 from dataclasses import dataclass
 import base64
+import math
+from Crypto.Hash import RIPEMD160
+import hashlib
 
 # From scratch implementation of elliptic curve by me (w/ reference to Mastering Bitcoin book's description of stuff). If there are any errors, please let me know.
 
@@ -19,6 +22,33 @@ def extended_euclidean_algorithm(a, b):
 def modular_inverse(n, p):
     gcd, x, y = extended_euclidean_algorithm(n, p)
     return x % p
+
+# Stolen from Karpathy's implementation cuz I'm too lazy to implement
+# This myself.
+def b58encode(b: bytes, alphabet: str) -> str:
+    n = int.from_bytes(b, 'big')
+    chars = []
+    while n:
+        n, i = divmod(n, 58)
+        chars.append(alphabet[i])
+    # special case handle the leading 0 bytes... ¯\_(ツ)_/¯
+    num_leading_zeros = len(b) - len(b.lstrip(b'\x00'))
+    return num_leading_zeros * alphabet[0] + ''.join(reversed(chars))
+
+
+def b58decode(s: str, alphabet: str) -> bytes:
+    n = 0
+    for c in s:
+        n *= 58
+        n += alphabet.index(c)
+    return n.to_bytes(math.ceil(n.bit_length() / 8), 'big')
+
+def sha256(msg):
+    return hashlib.sha256(msg).digest()
+
+def ripemd160(msg):
+    return RIPEMD160.new(msg).digest()
+
 
 @dataclass(frozen=True)
 class EllipticCurve:
@@ -55,6 +85,8 @@ class EllipticCurvePoint:
     x: int
     y: int
     curve: EllipticCurve = EllipticCurve()
+
+    ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
     def is_point_on_curve(self):
         return (self.x ** 3 + self.curve.a * self.x + self.curve.b - self.y ** 2) % self.curve.field_size == 0
@@ -111,6 +143,13 @@ class EllipticCurvePoint:
 
     def encode_b64(self):
         return base64.b64encode(self.encode()).decode()
+
+    def to_address(self):
+        k = self.encode()
+        address = ripemd160(sha256(k))
+        checksum = sha256(sha256(b'\x69' + address))[:4]
+        new_payload = b'\x02\xe4' + address + checksum
+        return b58encode(new_payload, self.ALPHABET)
 
     @classmethod
     def decode(cls, data: bytes):
