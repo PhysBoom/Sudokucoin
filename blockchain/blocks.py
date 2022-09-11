@@ -159,13 +159,13 @@ class Block:
 
     __slots__ = 'prev_hash', 'index', 'txs', 'timestamp', 'merkel_root', 'puzzle_solution'
 
-    def __init__(self, txs, index, prev_hash, timestamp=None, puzzle_solution=0):
+    def __init__(self, txs, index, prev_hash, timestamp=None, puzzle_solution=0, merkel_root=None):
         self.txs = txs or []
         self.prev_hash = prev_hash
         self.index = index
         self.puzzle_solution = puzzle_solution
         self.timestamp = timestamp or int(time.time())
-        self.merkel_root = None
+        self.merkel_root = merkel_root
 
     def build_merkel_tree(self):
         """
@@ -193,8 +193,8 @@ class Block:
 
     @property
     def seed(self):
-        seed_string = '{}{}{}'.format(
-            self.prev_hash, self.index, self.timestamp
+        seed_string = '{}{}{}{}'.format(
+            self.build_merkel_tree(), self.prev_hash, self.index, self.timestamp
         )
         return sha256(seed_string.encode()).hexdigest()
 
@@ -216,6 +216,7 @@ class Block:
             [Tx.from_dict(el) for el in data['txs']],
             data['index'],
             data['prev_hash'],
-            data['timestamp'],
-            data['puzzle_solution']
+            data.get('timestamp'),
+            data.get('puzzle_solution'),
+            data.get('merkel_root')
         )
