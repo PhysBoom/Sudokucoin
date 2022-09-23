@@ -10,6 +10,7 @@ class DB:
             'txs_per_block': 4,
             'mining_reward': 25,
             'difficulty': 22,
+            'difficulty_increase': lambda x: x+2,
         }
 
         self.block_index = 0
@@ -23,6 +24,9 @@ class DB:
     def backup(self):
         with open('block_%s' % self.block_index,'wb') as fp:
             pickle.dump(self.__dict__, fp)
+
+    def increment_difficulty(self):
+        self.config['difficulty'] = self.config['difficulty_increase'](self.config['difficulty'])
 
     @classmethod
     def restore(cls, block_index):

@@ -74,6 +74,7 @@ class Blockchain:
         else:        
             self.chain.append(block)
             self.fork_blocks = {}
+            self.db.increment_difficulty()
             logger.info('   Block added')
             return True
         logger.error('Hard chain out of sync')

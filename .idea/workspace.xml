@@ -7,9 +7,7 @@
     <list default="true" id="38a56728-d0b3-4d7d-95d9-cd9dca9445a3" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/blockchain/blockchain.py" beforeDir="false" afterPath="$PROJECT_DIR$/blockchain/blockchain.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/blockchain/wallet/elliptic_curve.py" beforeDir="false" afterPath="$PROJECT_DIR$/blockchain/wallet/elliptic_curve.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/full_node.py" beforeDir="false" afterPath="$PROJECT_DIR$/full_node.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/websocket_server.py" beforeDir="false" afterPath="$PROJECT_DIR$/websocket_server.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/blockchain/db.py" beforeDir="false" afterPath="$PROJECT_DIR$/blockchain/db.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
