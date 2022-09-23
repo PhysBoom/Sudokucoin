@@ -121,9 +121,9 @@ async def mine(request: Request):
         else:
             return {"success": False, "message": "Block not mined!"}
     except (UnicodeDecodeError, json.JSONDecodeError, binascii.Error):
-        return {"error": "Invalid board"}
+        return {"success": False, "error": "Invalid board"}
     except (BlockVerificationFailed, BlockOutOfChain) as e:
-        return {"error": str(e)}
+        return {"success": False, "error": str(e)}
 
 @app.get("/chain/get_block_currently_mining")
 async def get_block_currently_mining(private_key: int):
@@ -137,6 +137,47 @@ def generate_wallet():
         "private_key": str(wallet.private_key),
         "address": wallet.to_address()
     }
+
+@app.post("/chain/transaction")
+async def create_transaction(request: Request, background_tasks: BackgroundTasks):
+    data = await request.json()
+    bc = app.config['api']
+    private_key_from, address_to, amount = data['private_key_from'], data['address_to'], data['amount']
+    wallet = Address(private_key_from)
+    address_from = wallet.to_address()
+    unspent_txs = bc.get_user_unspent_txs(address_from)
+    total = 0
+    inputs = []
+    i = 0
+    try:
+        while total < amount:
+            prev = unspent_txs[i]
+            inp = Input(prev['tx'],prev['output_index'],address_from,i)
+            inp.sign(wallet)
+            total += prev['amount']
+            i += 1
+            inputs.append(inp)
+    except Exception as e:
+        return {"success":False, "msg":str(e)}
+
+    outs = [Output(address_to, amount, 0)]
+    if total - amount > 0:
+        outs.append(Output(address_from, total - amount, 1))
+
+    tx = Tx(inputs,outs)
+    try:
+        res = bc.add_tx(tx.as_dict)
+    except Exception as e:
+        logger.exception(e)
+        return {"success":False, "msg":str(e)}
+    else:
+        if res:
+            logger.info(f'Tx added to the stack')
+            background_tasks.add_task(broadcast, '/chain/tx_create', tx.as_dict, False)
+            return {"success":True}
+        logger.info('Tx already in stack. Skipped.')
+        return {"success":False, "msg":"Duplicate"}
+
 
 
 @app.get("/server/nodes")

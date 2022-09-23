@@ -104,11 +104,50 @@ class EllipticCurvePoint:
         elif self.x == other.x and self.y != other.y:
             return EllipticCurvePoint(0, 0) # Same x but different y makes a line extending up to infinity
         else:
+            """
+            The derivation of the below is as follows:
+
+            Since we know that point addition (P1 + P2 = P3) has P3 = the point that the line between
+            P1 and P2 intersects on the curve, we can state the following:
+
+            1. The line between P1 and P2 is (y - P1.y) = m * (x - P1.x), where m is either (P1.y - P2.y)/(P1.x - P2.x)
+            or, if P1 = P2, the derivative of the curve at (x, y) (which is (3x^2 + a)/2y)
+
+            2. The equation (m * (x-P1.x) + P1.y)^2 = x^3 + ax + b, or (m * (x-P1.x) + P1.y)^2 - x^3 - ax - b = 0
+            represents the intersection of the line and the curve
+
+            3. P1.x, P2.x, and P3.x are all solutions to the equation, so (x-P1.x)(x-P2.x)(x-P3.x) = 0
+
+            Therefore, we can do the following to solve for point 3:
+
+            1. Expand the equation of intersection to get
+            x^3 - m^2x^2 + 2m^2x(P1.y) + m^2(P1.y)^2 - 2P1.y(m)(P1.x) + ax + b - P1.x^2 = 0
+
+            2. Group the expression by powers of x
+            x^3 - x^2(m^2) + x(2(m^2)(P1.y) - 2(P1.y)(m) + a) + ((m^2)(P1.y^2) + 2(P1.y)(m)(P1.x)-P1.x^2) = 0
+
+            3. Expand the condition in statement 3 to get
+            x^3 - x^2(P1.x+P2.x+P3.x) + x((P1.x)(P2.x) + (P1.x)(P3.x) + (P2.x)(P3.x)) + ((P1.x)(P2.x)(P3.x)) = 0 
+
+            4. Because the two equations are equal, we know that the coefficients must be equal (by Viera's law, although
+            also logically if ax^3 + bx^2 + cx + d = ex^3 + fx^2 + gx + d for all x, a = e, b = f etc. since otherwise they
+            are two different functions).
+
+            As such, P1.x + P2.x + P3.x = m^2
+
+            --> P3.x = m^2 - P1.x - P2.x
+
+            5. By the line equation, we know that (P3.y - P1.y) = m(P3.x - P1.x)
+            
+            --> P3.y' = m(P3.x - P1.x) + P1.y 
+            
+            Since in elliptic curve addition we have to reflect over the x axis, P3.y is then just -P3.y'
+            """
             # Find the tangent line at the current point using basic calc + modular inverses cuz we are doing stuff
             # mod the field size.
 
             # First, find the slope
-            if self.x == other.x and self.y == other.y:
+            if self.x == other.x:
                 # If the points are the same (we are doing p + p = 2p), the slope is the derivative of the curve
                 # at the point (this is (3x^2+a)/2y, or the modular inverse of 2y since we are doing mod field size)
                 slope = (3 * self.x ** 2 + self.curve.a) * modular_inverse(2 * self.y, self.curve.field_size)
@@ -116,10 +155,7 @@ class EllipticCurvePoint:
                 # Use good old (y2 - y1)/(x2 - x1)
                 slope = (self.y - other.y) * modular_inverse(self.x - other.x, self.curve.field_size)
             line_function = lambda x: slope * (x - self.x) + self.y # Point slope
-
-            # TODO: Figure out why this works. I had to look it up (found on Andrej Karpathy's implementation)
             intersection_x = (slope ** 2 - self.x - other.x) % self.curve.field_size
-            # Must multiply y by -1 according to guide.
             intersection_y = -line_function(intersection_x) % self.curve.field_size
             return EllipticCurvePoint(intersection_x, intersection_y, self.curve)
 

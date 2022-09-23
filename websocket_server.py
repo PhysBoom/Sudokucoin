@@ -2,6 +2,7 @@ import websockets
 import asyncio
 from typing_extensions import TypedDict
 from threading import Thread
+import json
 
 class BlockchainEvent(TypedDict):
     event_type: str
@@ -27,7 +28,7 @@ class WebsocketServer:
     async def broadcast(self, message):
         """Broadcast message to all connected clients"""
         if self.connections:
-            await asyncio.wait([connection.send(str(message)) for connection in self.connections])
+            await asyncio.wait([connection.send(json.dumps(message)) for connection in self.connections])
 
     def start(self):
         """Start the websocket server in a separate thread"""

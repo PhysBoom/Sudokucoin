@@ -1,3 +1,4 @@
+from .wallet.elliptic_curve import EllipticCurvePoint
 from sudoku.sudoku_gen import SudokuGenerator
 from .blocks import Block, Tx, Input, Output
 from .verifiers import TxVerifier, BlockOutOfChain, BlockVerifier, BlockVerificationFailed
@@ -113,8 +114,9 @@ class Blockchain:
         for tx in block.txs:
             self.db.transaction_by_hash[tx.hash] = tx.as_dict
             for out in tx.outputs:
-                self.db.unspent_txs_by_user_hash[str(out.address)].add((tx.hash,out.hash))
-                self.db.unspent_outputs_amount[str(out.address)][out.hash] = int(out.amount)
+                out_address = str(EllipticCurvePoint.decode_b64(out.address).to_address())
+                self.db.unspent_txs_by_user_hash[out_address].add((tx.hash,out.hash))
+                self.db.unspent_outputs_amount[out_address][out.hash] = int(out.amount)
             for inp in tx.inputs:
                 if inp.prev_tx_hash == 'COINBASE':
                     continue
