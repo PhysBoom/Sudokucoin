@@ -125,7 +125,7 @@ async def mine(request: Request):
     except (BlockVerificationFailed, BlockOutOfChain) as e:
         return {"success": False, "error": str(e)}
 
-@app.get("/chain/get_block_currently_mining")
+@app.get("/chain/block_currently_mining")
 async def get_block_currently_mining(private_key: int):
     bc = app.config['api']
     return bc.get_block_currently_mining(private_key)
@@ -135,6 +135,13 @@ def generate_wallet():
     wallet = Address.create()
     return {
         "private_key": str(wallet.private_key),
+        "address": wallet.to_address()
+    }
+
+@app.get("/chain/wallet/address")
+def get_address(private_key: int):
+    wallet = Address(private_key)
+    return {
         "address": wallet.to_address()
     }
 
