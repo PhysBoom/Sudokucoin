@@ -14,8 +14,11 @@ class Input:
         self.address = address
         self.index = 0
         self._hash = None
-        self.signature = signature
+        self.signature = signature.encode() if type(signature) == str else signature
         self.amount = None
+
+    def __repr__(self):
+        return f"Input({self.prev_tx_hash}, {self.output_index}, {self.address}, {self.index}, {self.signature})"
 
     def sign(self, wallet):
         hash_string = '{}{}{}{}'.format(
@@ -28,10 +31,8 @@ class Input:
         if self._hash:
             return self._hash
         if not self.signature and self.prev_tx_hash != 'COINBASE':
-            raise Exception('Sing the input first')
-        hash_string = '{}{}{}{}'.format(
-            self.prev_tx_hash, self.output_index, self.address, self.signature, self.index
-        )
+            raise Exception('Sign the input first')
+        hash_string = f'{self.prev_tx_hash}{self.output_index}{self.address}{self.signature.encode() if type(self.signature) == str else self.signature}{self.index}'
         self._hash = sha256(sha256(hash_string.encode()).hexdigest().encode('utf8')).hexdigest()
         return self._hash
 
@@ -65,26 +66,27 @@ class Output:
     def __init__(self, address, amount, index=0, input_hash=None):
         self.address = address
         self.index = 0
-        self.amount = int(amount)
+        self.amount = round(float(amount), 7)
         # i use input hash here to make output hash unique, especialy for COINBASE tx
         self.input_hash = input_hash
         self._hash = None
+
+    def __repr__(self):
+        return f"Output(address={self.address}, amount={self.amount}, index={self.index}, input_hash={self.input_hash})"
 
     @property
     def hash(self):
         if self._hash:
             return self._hash
-   
-        hash_string = '{}{}{}{}'.format(
-            self.amount, self.index, self.address, self.input_hash
-        )
+
+        hash_string = f'{self.amount}{self.index}{self.address}{self.input_hash}'
         self._hash = sha256(sha256(hash_string.encode()).hexdigest().encode('utf8')).hexdigest()
         return self._hash
 
     @property
     def as_dict(self):
         return {
-            "amount":int(self.amount),
+            "amount":round(float(self.amount), 7),
             "address":str(self.address),
             "index":self.index,
             "input_hash": self.input_hash,
@@ -111,6 +113,9 @@ class Tx:
         self.timestamp = timestamp or int(time.time())
         self._hash = None
 
+    def __repr__(self):
+        return f"Tx(inputs={self.inputs}, outputs={self.outputs}, timestamp={self.timestamp})"
+
     @property
     def hash(self):
         if self._hash:
@@ -121,9 +126,8 @@ class Tx:
         for el in self.outputs:
             el.input_hash = inp_hash
 
-        hash_string = '{}{}{}'.format(
-            [el.as_dict for el in self.inputs], [el.as_dict for el in self.outputs], self.timestamp
-        )
+        hash_string = f'{[el.hash for el in self.inputs]}{[f"{el.amount}{el.address}{el.index}" for el in self.outputs]}{self.timestamp}'
+
         self._hash = sha256(sha256(hash_string.encode()).hexdigest().encode('utf8')).hexdigest()
         return self._hash
 
@@ -168,6 +172,11 @@ class Block:
         self.timestamp = timestamp or int(time.time())
         self.merkel_root = merkel_root
 
+    def __repr__(self):
+        return 'Block(index={}, prev_hash={}, timestamp={}, merkel_root={}, puzzle_solution={}, txs={})'.format(
+            self.index, self.prev_hash, self.timestamp, self.merkel_root, self.puzzle_solution, self.txs
+        )
+
     def build_merkel_tree(self):
         """
         Merkel Tree used to hash all the transactions, and on mining do not recompute Txs hash everytime
@@ -194,7 +203,7 @@ class Block:
 
     @property
     def winning_address(self):
-        return EllipticCurvePoint.decode_b64(self.txs[0].outputs[0].address).to_address() if self.txs and self.txs[0].inputs[0].prev_tx_hash == 'COINBASE' else None
+        return self.txs[0].outputs[0].address if self.txs and self.txs[0].inputs[0].prev_tx_hash == 'COINBASE' else None
 
     @property
     def seed(self):

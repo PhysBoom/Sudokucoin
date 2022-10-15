@@ -64,9 +64,9 @@ def sync_data():
     while True:
         sync_running = False
         for node in app.config['nodes']:
-            if node == ('%s:%s' % (app.config['host'],app.config['port'])):
+            if node == f"{app.config['host']}:{app.config['port']}":
                 continue
-            url = 'http://%s/chain/sync' % node
+            url = f'http://{node}/chain/sync'
             start = head['index']+1 if head else 0
             while True:
                 logger.info(url, {"from_block":start, "limit":20})
@@ -120,10 +120,14 @@ async def mine(request: Request):
             return {"success": True, "message": "Successfully mined block!"}
         else:
             return {"success": False, "message": "Block not mined!"}
-    except (UnicodeDecodeError, json.JSONDecodeError, binascii.Error):
+    except (UnicodeDecodeError, json.JSONDecodeError, binascii.Error) as e:
+        logger.exception(e)
         return {"success": False, "error": "Invalid board"}
     except (BlockVerificationFailed, BlockOutOfChain) as e:
         return {"success": False, "error": str(e)}
+    except Exception as e:
+        print(logger.exception(e))
+        return {"success": False, "error": "Unexpected error"}
 
 @app.get("/chain/block_currently_mining")
 async def get_block_currently_mining(private_key: int):
@@ -149,28 +153,28 @@ def get_address(private_key: int):
 async def create_transaction(request: Request, background_tasks: BackgroundTasks):
     data = await request.json()
     bc = app.config['api']
-    private_key_from, address_to, amount = data['private_key_from'], data['address_to'], data['amount']
+    private_key_from, address_to, amount = int(data['private_key_from']), data['address_to'], round(float(data['amount']), 7)
     wallet = Address(private_key_from)
-    address_from = wallet.to_address()
-    unspent_txs = bc.get_user_unspent_txs(address_from)
+    public_key_from = wallet.to_public_key().encode_b64()
+    unspent_txs = bc.get_user_unspent_txs(wallet.to_address())
     total = 0
     inputs = []
     i = 0
     try:
         while total < amount:
             prev = unspent_txs[i]
-            inp = Input(prev['tx'],prev['output_index'],address_from,i)
+            inp = Input(prev['tx'],prev['output_index'],public_key_from,i)
             inp.sign(wallet)
             total += prev['amount']
             i += 1
             inputs.append(inp)
+    except IndexError:
+        return {"success": False, "msg": "Insufficient unspent UTXOs to create transaction"}
     except Exception as e:
         return {"success":False, "msg":str(e)}
-
     outs = [Output(address_to, amount, 0)]
     if total - amount > 0:
-        outs.append(Output(address_from, total - amount, 1))
-
+        outs.append(Output(wallet.to_address(), total - amount, 1))
     tx = Tx(inputs,outs)
     try:
         res = bc.add_tx(tx.as_dict)
@@ -199,49 +203,6 @@ async def add_nodes(nodes:NodesModel, request: Request):
         broadcast('/server/add_nodes', {'nodes':list(app.config['nodes'])}, False, request.headers.get('node'))
         logger.info(f'New nodes added: {nodes.nodes}')
     return {"success":True}
-
-### DEMO OPERATIONS
-
-@app.get("/demo/send_amount")
-async def send_amount(address_to:str, amount:int, background_tasks: BackgroundTasks):
-    '''Sending amount of coins from server wallet to some other wallet'''
-
-    address_from = app.config['wallet'].address
-    wallet = app.config['wallet']
-    bc = app.config['api']
-    unspent_txs = bc.get_user_unspent_txs(address_from)
-    total = 0
-    inputs = []
-    i = 0
-    try:
-        while total < amount:
-            prev = unspent_txs[i]
-            inp = Input(prev['tx'],prev['output_index'],address_from,i)
-            inp.sign(wallet)
-            total += prev['amount']
-            i += 1
-            inputs.append(inp)
-    except Exception as e:
-        return {"success":False, "msg":str(e)}
-
-    outs = [Output(address_to, amount, 0)]
-    if total - amount > 0:
-        outs.append(Output(address_from, total - amount, 1))
-
-    tx = Tx(inputs,outs)
-    try:
-        res = bc.add_tx(tx.as_dict)
-    except Exception as e:
-        logger.exception(e)
-        return {"success":False, "msg":str(e)}
-    else:
-        if res:
-            logger.info(f'Tx added to the stack')
-            background_tasks.add_task(broadcast, '/chain/tx_create', tx.as_dict, False)
-            return {"success":True}
-        logger.info('Tx already in stack. Skipped.')
-        return {"success":False, "msg":"Duplicate"}
-    
 
 ### ON CHAIN OPERATIONS
 
@@ -273,6 +234,11 @@ async def status():
 async def sync(from_block:int, limit:int=20):
     bc = app.config['api']
     return bc.get_chain(from_block, limit)
+
+@app.get("/chain/head")
+async def head():
+    bc = app.config['api']
+    return bc.get_head()
 
 @app.post("/chain/add_block")
 async def add_block(block:BlockModel, background_tasks: BackgroundTasks, request: Request):

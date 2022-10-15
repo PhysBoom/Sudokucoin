@@ -6,6 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="38a56728-d0b3-4d7d-95d9-cd9dca9445a3" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/blockchain/api.py" beforeDir="false" afterPath="$PROJECT_DIR$/blockchain/api.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/blockchain/blockchain.py" beforeDir="false" afterPath="$PROJECT_DIR$/blockchain/blockchain.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/blockchain/blocks.py" beforeDir="false" afterPath="$PROJECT_DIR$/blockchain/blocks.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/blockchain/verifiers.py" beforeDir="false" afterPath="$PROJECT_DIR$/blockchain/verifiers.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/full_node.py" beforeDir="false" afterPath="$PROJECT_DIR$/full_node.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
