@@ -44,7 +44,7 @@ class SudokuGenerator:
         # Scale difficulty (between last_n and next_n) to range (n/2, 4n/5)
         num_squares_hidden = int((max_hidden - min_hidden)*(self.difficulty-last_n_increase)/(next_n_increase - last_n_increase)+min_hidden)
 
-        return self.n, 0
+        return self.n, num_squares_hidden
 
     def generate_board(self) -> SudokuBoard:
         board = SudokuBoard(self.n, self.seed)
