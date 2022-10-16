@@ -1,16 +1,18 @@
 import pickle
 from collections import defaultdict
 
+
 class DB:
     """
     Class that just emulates some sort of DB used to save all data
     """
+
     def __init__(self):
         self.config = {
-            'txs_per_block': 4,
-            'mining_reward': 25,
-            'difficulty': 22,
-            'difficulty_increase': lambda x: x+2,
+            "txs_per_block": 4,
+            "mining_reward": 25,
+            "difficulty": 22,
+            "difficulty_increase": lambda x: x + 2,
         }
 
         self.block_index = 0
@@ -18,19 +20,22 @@ class DB:
         self.unspent_txs_by_user_hash = defaultdict(set)
         self.unspent_outputs_amount = defaultdict(dict)
 
-    '''
+    """
         Just simple routine to save/restore db data for block number
-    '''
+    """
+
     def backup(self):
-        with open('block_%s' % self.block_index,'wb') as fp:
+        with open("block_%s" % self.block_index, "wb") as fp:
             pickle.dump(self.__dict__, fp)
 
     def increment_difficulty(self):
-        self.config['difficulty'] = self.config['difficulty_increase'](self.config['difficulty'])
+        self.config["difficulty"] = self.config["difficulty_increase"](
+            self.config["difficulty"]
+        )
 
     @classmethod
     def restore(cls, block_index):
-        with open('block_%s' % block_index, 'rb') as fp:
+        with open("block_%s" % block_index, "rb") as fp:
             data = pickle.load(fp)
 
         inst = cls()

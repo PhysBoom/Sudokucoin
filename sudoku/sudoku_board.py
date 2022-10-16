@@ -3,8 +3,10 @@ import json
 import random
 from typing import List, Tuple
 
+
 class SudokuBoardException(Exception):
     pass
+
 
 class SudokuBoard:
     """
@@ -48,14 +50,20 @@ class SudokuBoard:
         return self.valid and all(0 not in row for row in self.board)
 
     def __str__(self):
-        pretty_board = "\n".join([' '.join(map(str, row)) for row in self.board]) # TODO: Make this prettier
+        pretty_board = "\n".join(
+            [" ".join(map(str, row)) for row in self.board]
+        )  # TODO: Make this prettier
         return f"Sudoku Board of size {self.n}x{self.n} with seed {self.seed}.\n\nBoard:\n\n{pretty_board}"
 
     def _get_box_size(self) -> Tuple[int, int]:
         """Gets the dimensions of one sudoku box (i.e. if n=9, this returns (3, 3); if n=8 it's (2, 4))"""
 
-        possible_factors = [(i, self.n // i) for i in range(1, int(self.n**0.5)+1) if self.n % i == 0]
-        sqrt_n = self.n ** 0.5
+        possible_factors = [
+            (i, self.n // i)
+            for i in range(1, int(self.n**0.5) + 1)
+            if self.n % i == 0
+        ]
+        sqrt_n = self.n**0.5
         # Find the tuple where the first element is closest (and lower) to sqrt_n
         return min(possible_factors, key=lambda x: abs(x[0] - sqrt_n))
 
@@ -97,16 +105,16 @@ class SudokuBoard:
 
         def pattern(row: int, col: int) -> int:
             """Returns the pattern for the given row and column"""
-            return (c_base * (row%r_base) + row//r_base + col)%self.n
+            return (c_base * (row % r_base) + row // r_base + col) % self.n
 
         def shuffle(s):
             return random.sample(s, len(s))
 
         row_range = range(r_base)
         col_range = range(c_base)
-        rows = [ g*r_base + r for g in shuffle(col_range) for r in shuffle(row_range) ]
-        cols = [ g*c_base + c for g in shuffle(row_range) for c in shuffle(col_range) ]
-        nums = shuffle(range(1, self.n+1))
+        rows = [g * r_base + r for g in shuffle(col_range) for r in shuffle(row_range)]
+        cols = [g * c_base + c for g in shuffle(row_range) for c in shuffle(col_range)]
+        nums = shuffle(range(1, self.n + 1))
 
         self.board = [[nums[pattern(r, c)] for c in cols] for r in rows]
 
@@ -127,17 +135,20 @@ class SudokuBoard:
             "n": self.n,
             "seed": self.seed,
             "board": self.board,
-            "box_size": self._get_box_size()
+            "box_size": self._get_box_size(),
         }
         return base64.b64encode(json.dumps(json_board).encode()).decode()
 
-    def is_valid_solution(self, other: 'SudokuBoard') -> bool:
+    def is_valid_solution(self, other: "SudokuBoard") -> bool:
         """Checks if the other board is a valid solution to this board"""
         if not other.solved:
             return False
         for row in range(self.n):
             for col in range(self.n):
-                if self.board[row][col] != 0 and self.board[row][col] != other.board[row][col]:
+                if (
+                    self.board[row][col] != 0
+                    and self.board[row][col] != other.board[row][col]
+                ):
                     return False
         return True
 
@@ -145,9 +156,3 @@ class SudokuBoard:
     def decode(cls, encoded_board: str) -> "SudokuBoard":
         json_board = json.loads(base64.b64decode(encoded_board).decode())
         return cls(json_board["n"], json_board["seed"], json_board["board"])
-
-
-
-
-
-

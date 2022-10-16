@@ -4,10 +4,12 @@ from typing_extensions import TypedDict
 from threading import Thread
 import json
 
+
 class BlockchainEvent(TypedDict):
     event_type: str
     message: str
     data: dict
+
 
 class WebsocketServer:
     """Websocket server to handle transmissions of blockchain events"""
@@ -28,10 +30,16 @@ class WebsocketServer:
     async def broadcast(self, message):
         """Broadcast message to all connected clients"""
         if self.connections:
-            await asyncio.wait([connection.send(json.dumps(message)) for connection in self.connections])
+            await asyncio.wait(
+                [
+                    connection.send(json.dumps(message))
+                    for connection in self.connections
+                ]
+            )
 
     def start(self):
         """Start the websocket server in a separate thread"""
+
         def run():
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
@@ -39,8 +47,5 @@ class WebsocketServer:
             loop.run_until_complete(start_server)
             loop.run_forever()
             loop.close()
+
         Thread(target=run, daemon=True).start()
-
-
-        
-        

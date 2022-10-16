@@ -19,21 +19,23 @@ def extended_euclidean_algorithm(a, b):
         old_t, t = t, old_t - quotient * t
     return old_r, old_s, old_t
 
+
 def modular_inverse(n, p):
     gcd, x, y = extended_euclidean_algorithm(n, p)
     return x % p
 
+
 # Stolen from Karpathy's implementation cuz I'm too lazy to implement
 # This myself.
 def b58encode(b: bytes, alphabet: str) -> str:
-    n = int.from_bytes(b, 'big')
+    n = int.from_bytes(b, "big")
     chars = []
     while n:
         n, i = divmod(n, 58)
         chars.append(alphabet[i])
     # special case handle the leading 0 bytes... ¯\_(ツ)_/¯
-    num_leading_zeros = len(b) - len(b.lstrip(b'\x00'))
-    return num_leading_zeros * alphabet[0] + ''.join(reversed(chars))
+    num_leading_zeros = len(b) - len(b.lstrip(b"\x00"))
+    return num_leading_zeros * alphabet[0] + "".join(reversed(chars))
 
 
 def b58decode(s: str, alphabet: str) -> bytes:
@@ -41,10 +43,12 @@ def b58decode(s: str, alphabet: str) -> bytes:
     for c in s:
         n *= 58
         n += alphabet.index(c)
-    return n.to_bytes(math.ceil(n.bit_length() / 8), 'big')
+    return n.to_bytes(math.ceil(n.bit_length() / 8), "big")
+
 
 def sha256(msg):
     return hashlib.sha256(msg).digest()
+
 
 def ripemd160(msg):
     return RIPEMD160.new(msg).digest()
@@ -63,9 +67,12 @@ class EllipticCurve:
         <int> b: Constant (7 in secp256k1)
     """
 
-    field_size: int = 2 ** 256 - 2 ** 32 - 2 ** 9 - 2 ** 8 - 2 ** 7 - 2 ** 6 - 2 ** 4 - 1
+    field_size: int = (
+        2**256 - 2**32 - 2**9 - 2**8 - 2**7 - 2**6 - 2**4 - 1
+    )
     a: int = 0
     b: int = 7
+
 
 @dataclass(frozen=True)
 class EllipticCurvePoint:
@@ -89,7 +96,9 @@ class EllipticCurvePoint:
     ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
     def is_point_on_curve(self):
-        return (self.x ** 3 + self.curve.a * self.x + self.curve.b - self.y ** 2) % self.curve.field_size == 0
+        return (
+            self.x**3 + self.curve.a * self.x + self.curve.b - self.y**2
+        ) % self.curve.field_size == 0
 
     def is_point_at_infinity(self):
         return self.x == 0 and self.y == 0
@@ -102,7 +111,9 @@ class EllipticCurvePoint:
         elif other.is_point_at_infinity():
             return self
         elif self.x == other.x and self.y != other.y:
-            return EllipticCurvePoint(0, 0) # Same x but different y makes a line extending up to infinity
+            return EllipticCurvePoint(
+                0, 0
+            )  # Same x but different y makes a line extending up to infinity
         else:
             """
             The derivation of the below is as follows:
@@ -127,7 +138,7 @@ class EllipticCurvePoint:
             x^3 - x^2(m^2) + x(2(m^2)(P1.y) - 2(P1.y)(m) + a) + ((m^2)(P1.y^2) + 2(P1.y)(m)(P1.x)-P1.x^2) = 0
 
             3. Expand the condition in statement 3 to get
-            x^3 - x^2(P1.x+P2.x+P3.x) + x((P1.x)(P2.x) + (P1.x)(P3.x) + (P2.x)(P3.x)) + ((P1.x)(P2.x)(P3.x)) = 0 
+            x^3 - x^2(P1.x+P2.x+P3.x) + x((P1.x)(P2.x) + (P1.x)(P3.x) + (P2.x)(P3.x)) + ((P1.x)(P2.x)(P3.x)) = 0
 
             4. Because the two equations are equal, we know that the coefficients must be equal (by Viera's law, although
             also logically if ax^3 + bx^2 + cx + d = ex^3 + fx^2 + gx + d for all x, a = e, b = f etc. since otherwise they
@@ -138,9 +149,9 @@ class EllipticCurvePoint:
             --> P3.x = m^2 - P1.x - P2.x
 
             5. By the line equation, we know that (P3.y - P1.y) = m(P3.x - P1.x)
-            
-            --> P3.y' = m(P3.x - P1.x) + P1.y 
-            
+
+            --> P3.y' = m(P3.x - P1.x) + P1.y
+
             Since in elliptic curve addition we have to reflect over the x axis, P3.y is then just -P3.y'
             """
             # Find the tangent line at the current point using basic calc + modular inverses cuz we are doing stuff
@@ -150,12 +161,16 @@ class EllipticCurvePoint:
             if self.x == other.x:
                 # If the points are the same (we are doing p + p = 2p), the slope is the derivative of the curve
                 # at the point (this is (3x^2+a)/2y, or the modular inverse of 2y since we are doing mod field size)
-                slope = (3 * self.x ** 2 + self.curve.a) * modular_inverse(2 * self.y, self.curve.field_size)
+                slope = (3 * self.x**2 + self.curve.a) * modular_inverse(
+                    2 * self.y, self.curve.field_size
+                )
             else:
                 # Use good old (y2 - y1)/(x2 - x1)
-                slope = (self.y - other.y) * modular_inverse(self.x - other.x, self.curve.field_size)
-            line_function = lambda x: slope * (x - self.x) + self.y # Point slope
-            intersection_x = (slope ** 2 - self.x - other.x) % self.curve.field_size
+                slope = (self.y - other.y) * modular_inverse(
+                    self.x - other.x, self.curve.field_size
+                )
+            line_function = lambda x: slope * (x - self.x) + self.y  # Point slope
+            intersection_x = (slope**2 - self.x - other.x) % self.curve.field_size
             intersection_y = -line_function(intersection_x) % self.curve.field_size
             return EllipticCurvePoint(intersection_x, intersection_y, self.curve)
 
@@ -175,7 +190,7 @@ class EllipticCurvePoint:
         return self * times
 
     def encode(self):
-        return b'\x04' + self.x.to_bytes(32, 'big') + self.y.to_bytes(32, 'big')
+        return b"\x04" + self.x.to_bytes(32, "big") + self.y.to_bytes(32, "big")
 
     def encode_b64(self):
         return base64.b64encode(self.encode()).decode()
@@ -183,14 +198,14 @@ class EllipticCurvePoint:
     def to_address(self):
         k = self.encode()
         address = ripemd160(sha256(k))
-        checksum = sha256(sha256(b'\x69' + address))[:4]
-        new_payload = b'\x02\xe4' + address + checksum
+        checksum = sha256(sha256(b"\x69" + address))[:4]
+        new_payload = b"\x02\xe4" + address + checksum
         return b58encode(new_payload, self.ALPHABET)
 
     @classmethod
     def decode(cls, data: bytes):
         assert data[0] == 4
-        return cls(int.from_bytes(data[1:33], 'big'), int.from_bytes(data[33:], 'big'))
+        return cls(int.from_bytes(data[1:33], "big"), int.from_bytes(data[33:], "big"))
 
     @classmethod
     def decode_b64(cls, data: str):

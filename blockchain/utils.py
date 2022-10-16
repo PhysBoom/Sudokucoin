@@ -18,7 +18,7 @@ class CompositeNumbers:
             self.composite_numbers = [i for i in range(4, 10**5) if not is_prime[i]]
         else:
             raise Exception("This is a singleton class")
-            
+
     @classmethod
     def get_instance(cls, *args, **kwargs):
         if cls.__instance is None:

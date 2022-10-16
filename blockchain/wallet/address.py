@@ -3,8 +3,6 @@ from .elliptic_curve import EllipticCurvePoint
 import ecdsa
 
 
-
-
 class Address:
     """
     The sudokucoin address
@@ -16,9 +14,10 @@ class Address:
         <EllipticCurvePoint> to_public_key: Get the public key given the private key
         <str> to_address: Gets the Base58 address using Base58Check Encode
     """
+
     GENERATOR = EllipticCurvePoint(
         0x79BE667EF9DCBBAC55A06295CE870B07029BFCDB2DCE28D959F2815B16F81798,
-        0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8
+        0x483ADA7726A3C4655DA4FBFC0E1108A8FD17B448A68554199C47D08FFB10D4B8,
     )
 
     def __init__(self, private_key: int):
@@ -38,16 +37,18 @@ class Address:
         """
         Sign the message with the private key
         """
-        private_key = ecdsa.SigningKey.from_secret_exponent(self.private_key, curve=ecdsa.SECP256k1)
+        private_key = ecdsa.SigningKey.from_secret_exponent(
+            self.private_key, curve=ecdsa.SECP256k1
+        )
         return private_key.sign(msg)
 
     @classmethod
-    def create(cls, private_key: int = None) -> 'Address':
+    def create(cls, private_key: int = None) -> "Address":
         """
         Create a new address
         """
         if private_key is None:
-            private_key = int.from_bytes(os.urandom(32), 'big')
+            private_key = int.from_bytes(os.urandom(32), "big")
         return cls(private_key)
 
     @staticmethod
@@ -56,7 +57,9 @@ class Address:
         Verify the signature of the message with the public key
         """
         try:
-            public_key = ecdsa.VerifyingKey.from_string(public_key.encode(), curve=ecdsa.SECP256k1)
+            public_key = ecdsa.VerifyingKey.from_string(
+                public_key.encode(), curve=ecdsa.SECP256k1
+            )
             return public_key.verify(signature, msg)
         except ecdsa.BadSignatureError:
             return False
