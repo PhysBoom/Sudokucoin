@@ -24,12 +24,8 @@ class SudokuGenerator:
     def __init__(self, difficulty: int, seed: str) -> None:
         self.difficulty = difficulty
         self.seed = seed
-
-    @property
-    def n(self):
-        """We only generate boards where n is not prime"""
-        n = int(math.log(self.difficulty, 3)) if self.difficulty > 1 else 1
-        return CompositeNumbers.get_instance().get_nth(n)
+        self._n_seed = int(math.log(self.difficulty, 3)) if self.difficulty > 1 else 1
+        self.n = CompositeNumbers.get_instance().get_nth(self._n_seed)
 
     def _get_n_and_num_squares(self):
         """Gets size of board (nxn) and number of squares to keep"""
@@ -39,8 +35,8 @@ class SudokuGenerator:
         # 2. Find at which difficulty n will increase and at which difficulty n last increased
         # 3. Assuming we want to hide anywhere between 4n/5 (hardest) and n/2 (easiest) squares, we scale the difference to that range
         num_squares = self.n**2
-        last_n_increase = 3 ** (self.n - 2)
-        next_n_increase = 3 ** (self.n - 1)
+        last_n_increase = 3 ** (self._n_seed)
+        next_n_increase = 3 ** (self._n_seed + 1)
         max_hidden, min_hidden = 4 * num_squares // 5, num_squares // 2
 
         # Scale difficulty (between last_n and next_n) to range (n/2, 4n/5)

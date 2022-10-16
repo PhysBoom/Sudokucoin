@@ -9,7 +9,7 @@ class TestSudokuGen(TestCase):
         s = SudokuGenerator(25, "seed")
         n, num_squares_hidden = s._get_n_and_num_squares()
         self.assertEqual(n, 6)
-        self.assertEqual(num_squares_hidden, 14)
+        self.assertEqual(num_squares_hidden, 26)
 
     def test_encoding(self):
         s = SudokuGenerator(678192, "seed")
